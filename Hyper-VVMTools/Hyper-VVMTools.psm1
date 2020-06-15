@@ -4,19 +4,31 @@ function New-VMFromTemplate {
         [Parameter(Mandatory=$true)]
         [ValidateSet("WIN16TEMPLATE", "WIN16CORESVR_TEMPLATE", "CENTOS_TEMPLATE")]
         $Template,
-        [string]$SnapFilePath = "B:\Hyper-V\Virtual Machines\",
-        [string]$SmartPagePath = "B:\Hyper-V\Virtual Machines\",
-        [string]$VHDPath = "B:\Hyper-V\virtual hard disks\",
-        [string][Parameter(Mandatory=$true)]$VMName
+        [string]$SnapFilePath = "E:\Hyper-V\Virtual Machines\",
+        [string]$SmartPagePath = "E:\Hyper-V\Virtual Machines\",
+        [string]$VHDPath = "E:\Hyper-V\virtual hard disks\",
+        [string[]][Parameter(Mandatory=$true)]$VMName
     )
 
-    if ($VHDPath -contains "$Template.vhdx") {
+    foreach ($Name in $VMName){
 
-        Write-Host "Removing Unnammed VM..."
+        $vmcxName= Get-ChildItem -File -Path  "E:\Hyper-V\$Template\Virtual Machines\*.vmcx"
 
-        Remove-VMAll -VMName $Template
+        $VM = Import-VM -Path $vmcxName.FullName -GenerateNewID -Copy -SnapshotFilePath $SnapFilePath -SmartPagingFilePath $SmartPagePath -VhdDestinationPath $VHDPath
+
+        $Splitpoint = $($VM.HardDrives.Path).lastIndexOf('\')
+
+        $VHDName = "$(($VM.HardDrives.Path).Substring(0,$Splitpoint))\$Name.vhdx"
+
+        Rename-VM $($VM.Name) -NewName $Name
+
+        Rename-Item -Path "$($VM.HardDrives.Path)" -NewName $VHDName
+
+        Get-VMHardDiskDrive -VMName $($VM.Name) | Set-VMHardDiskDrive -Path $VHDName 
 
     }
+
+}
 
     else{
         
@@ -39,7 +51,8 @@ function New-VMFromTemplate {
 
     
     }
-}
+
+
 
 function Export-VMTemplate {
     param (
