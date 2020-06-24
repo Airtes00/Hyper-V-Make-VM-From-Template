@@ -1,18 +1,18 @@
 function New-VMFromTemplate {
-
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)]
         [ValidateSet("WIN16TEMPLATE", "WIN16CORESVR_TEMPLATE", "CENTOS_TEMPLATE")]
         $Template,
-        [string]$SnapFilePath = "E:\Hyper-V\Virtual Machines\",
-        [string]$SmartPagePath = "E:\Hyper-V\Virtual Machines\",
-        [string]$VHDPath = "E:\Hyper-V\virtual hard disks\",
+        [string]$SnapFilePath = "A:\Hyper-V\Virtual Machines\",
+        [string]$SmartPagePath = "A:\Hyper-V\Virtual Machines\",
+        [string]$VHDPath = "A:\Hyper-V\virtual hard disks\",
         [string[]][Parameter(Mandatory=$true)]$VMName
     )
 
     foreach ($Name in $VMName){
 
-        $vmcxName= Get-ChildItem -File -Path  "E:\Hyper-V\$Template\Virtual Machines\*.vmcx"
+        $vmcxName= Get-ChildItem -File -Path  "B:\Hyper-V\$Template\Virtual Machines\*.vmcx"
 
         $VM = Import-VM -Path $vmcxName.FullName -GenerateNewID -Copy -SnapshotFilePath $SnapFilePath -SmartPagingFilePath $SmartPagePath -VhdDestinationPath $VHDPath
 
@@ -20,41 +20,17 @@ function New-VMFromTemplate {
 
         $VHDName = "$(($VM.HardDrives.Path).Substring(0,$Splitpoint))\$Name.vhdx"
 
-        Rename-VM $($VM.Name) -NewName $Name
+        Rename-VM $($VM.Name) -NewName $Name -Verbose
 
-        Rename-Item -Path "$($VM.HardDrives.Path)" -NewName $VHDName
+        Rename-Item -Path "$($VM.HardDrives.Path)" -NewName $VHDName -Verbose
 
-        Get-VMHardDiskDrive -VMName $($VM.Name) | Set-VMHardDiskDrive -Path $VHDName 
+        Get-VMHardDiskDrive -VMName $($VM.Name) | Set-VMHardDiskDrive -Path $VHDName -Verbose 
 
     }
-
 }
 
-    else{
-        
-
-        $vmcxName= Get-ChildItem -File -Path  "A:\Hyper-V\$Template\Virtual Machines\*.vmcx"
-
-        $VM = Import-VM -Path $vmcxName.FullName -GenerateNewID -Copy -SnapshotFilePath $SnapFilePath -SmartPagingFilePath $SmartPagePath -VhdDestinationPath $VHDPath
-
-        $Splitpoint = $($VM.HardDrives.Path).lastIndexOf('\')
-
-        $VHDName = "$(($VM.HardDrives.Path).Substring(0,$Splitpoint))\$VMName.vhdx"
-
-        Rename-VM $($VM.Name) -NewName $VMName
-
-        Rename-Item -Path "$($VM.HardDrives.Path)" -NewName $VHDName
-
-        Get-VMHardDiskDrive -VMName $($VM.Name) | Set-VMHardDiskDrive -Path $VHDName 
-
-        
-
-    
-    }
-
-
-
 function Export-VMTemplate {
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][String]$VMName,
         [string]$Destination = "A:\Hyper-V\"
@@ -87,6 +63,7 @@ function Export-VMTemplate {
 }
 
 function Remove-VMAll {
+    [CmdletBinding()]
     param (
         [String]$VMName
     )
@@ -107,7 +84,7 @@ function Remove-VMAll {
 
         Write-Host "Deleting $VMName checkpoints"
 
-        Remove-VMCheckpoint -VMName $VMName -IncludeAllChildSnapshots
+        Remove-VMCheckpoint -VMName $VMName 
 
         Write-Host "Deleteing $VMName... at $VMName"
 
